@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Personal Diary Management System</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #e9f5ff;
+      padding: 40px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #005792;
+      margin-bottom: 30px;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      font-family: monospace;
+      font-size: 16px;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      resize: vertical;
+    }
+    button {
+      background-color: #005792;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #003f6b;
+    }
+    pre, .result-table {
+      margin-top: 20px;
+      width: 100%;
+    }
+    table {
+      border: 1px solid #ccc;
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #d9edf7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Personal Diary Management System</h1>
+
+    <textarea id="sqlQuery" placeholder="Write your SQL query here..."></textarea>
+
+    <div style="text-align: center;">
+      <button onclick="submitQuery()">Submit</button>
+    </div>
+
+    <div id="resultBox" class="result-table"></div>
+  </div>
+
+  <script>
+    function submitQuery() {
+      const query = document.getElementById('sqlQuery').value.trim();
+      const resultBox = document.getElementById('resultBox');
+      resultBox.innerHTML = "";
+
+      if (query === "") {
+        resultBox.innerHTML = "⚠ Please enter an SQL query.";
+        return;
+      }
+
+      fetch("api.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ sql: query })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          resultBox.innerHTML = "❌ Error:<br>" + data.error;
+        } else if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+          const headers = Object.keys(data.data[0]);
+          let table = "<table>";
+
+          // Header row
+          table += "<tr>";
+          headers.forEach(header => {
+            table += `<th>${header}</th>`;
+          });
+          table += "</tr>";
+
+          // Data rows
+          data.data.forEach(row => {
+            table += "<tr>";
+            headers.forEach(header => {
+              table += `<td>${row[header]}</td>`;
+            });
+            table += "</tr>";
+          });
+
+          table += "</table>";
+          resultBox.innerHTML = "✅ Query Result:<br>" + table;
+        } else if (data.message) {
+          resultBox.innerHTML = "✅ " + data.message;
+        } else {
+          resultBox.innerHTML = "⚠ Unknown response from server.";
+        }
+      })
+      .catch(error => {
+        resultBox.innerHTML = "⚠ Failed to connect to server.<br>" + error;
+      });
+    }
+  </script>
+</body>
+</html>
+
